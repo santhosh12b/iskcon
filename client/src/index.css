@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-primary: #8C1C13;
+  --color-accent: #F2CC8F;
+  --color-dark: #F9F9F9;
+  --color-dark-card: #FFFFFF;
+  --color-dark-lighter: #F3F3F3;
+  --color-text: #121212;
+  --color-text-muted: #666666;
+
+  /* Fonts */
+  --font-outfit: "Outfit", sans-serif;
+
+  /* Animations */
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-spin-slow: spin-slow 20s linear infinite;
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes glow {
+    0% { filter: drop-shadow(0 0 5px rgba(242, 204, 143, 0)); }
+    50% { filter: drop-shadow(0 0 15px rgba(242, 204, 143, 0.6)); }
+    100% { filter: drop-shadow(0 0 5px rgba(242, 204, 143, 0)); }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-dark text-text font-outfit antialiased overflow-x-hidden;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white border border-black/5 shadow-sm;
+  }
+  
+  .glass-hover {
+    @apply hover:shadow-md transition-all duration-300 border-black/10;
+  }
+
+  .btn-primary {
+    @apply bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-full font-medium transition-all active:scale-95 shadow-lg shadow-primary/20;
+  }
+
+  .btn-outline {
+    @apply border border-black/10 hover:bg-black/5 text-text px-6 py-2.5 rounded-full font-medium transition-all active:scale-95;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-text to-gray-500;
+  }
+
+  .icon-premium {
+    @apply flex items-center justify-center rounded-2xl shadow-lg shadow-primary/10 border border-primary/10 bg-gradient-to-br from-white to-dark-lighter;
+  }
+
+  .spiritual-glow {
+    animation: glow 4s ease-in-out infinite;
+  }
+
+  .ticket-ui {
+    position: relative;
+    background: white;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    /* Use mask to create true transparent semi-circle cutouts */
+    -webkit-mask-image: radial-gradient(circle at 0 50%, transparent 10px, black 11px), radial-gradient(circle at 100% 50%, transparent 10px, black 11px);
+    -webkit-mask-size: 51% 100%, 51% 100%;
+    -webkit-mask-position: 0 0, 100% 0;
+    -webkit-mask-repeat: no-repeat;
+    mask-image: radial-gradient(circle at 0 50%, transparent 10px, black 11px), radial-gradient(circle at 100% 50%, transparent 10px, black 11px);
+    mask-size: 51% 100%, 51% 100%;
+    mask-position: 0 0, 100% 0;
+    mask-repeat: no-repeat;
+  }
+
+  /* Wrap ticket-ui in a container to apply drop-shadow to the masked shape */
+  .ticket-ui-wrapper {
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.04));
+    transition: all 0.3s ease;
+  }
+  
+  .ticket-ui-wrapper:hover {
+    filter: drop-shadow(0 8px 15px rgba(0,0,0,0.08));
+    transform: translateY(-2px);
+  }
+
+  .ticket-ui-divider {
+    height: calc(100% - 24px);
+    width: 2px;
+    background-image: linear-gradient(to bottom, rgba(0,0,0,0.06) 50%, transparent 50%);
+    background-size: 100% 12px;
+    background-repeat: repeat-y;
+    position: absolute;
+    left: 85px;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-dark;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-black/10 rounded-full hover:bg-black/20 transition-colors;
+}
