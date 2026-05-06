@@ -7,8 +7,9 @@ module.exports = [
         location: "JR Orchids, Near ISKCON Coimbatore",
         fullLocation: "JR Orchids, Near ISKCON Coimbatore, Coimbatore, Tamil Nadu",
         price: 299,
-        images: ["/bajan.jpg"],
-        image: "/bajan.jpg",
+        images: ["/uploads/bajan.jpg"],
+        image: "/uploads/bajan.jpg",
+
         category: "Spiritual • Music • Community Gathering",
         totalSlots: 500,
         availableSlots: 500,
