@@ -282,11 +282,14 @@ app.get('/api/admin/bookings', async (req, res) => {
 
 // 7. Admin – Reseed Database (password protected)
 app.get('/api/admin/reseed', async (req, res) => {
-    const adminPass = req.headers['x-admin-key'] || req.query.key;
+    const adminPass = (req.headers['x-admin-key'] || req.query.key || '').trim();
+    const secret = (process.env.ADMIN_SECRET || '').trim();
 
-    if (adminPass !== process.env.ADMIN_SECRET) {
+    if (!secret || adminPass !== secret) {
+        console.log(`Reseed unauthorized attempt. Provided: [${adminPass}], Secret set: ${secret ? 'YES' : 'NO'}`);
         return res.status(401).json({ message: 'Unauthorized' });
     }
+
     try {
         console.log('Reseeding database...');
         const seedData = require('./seed-data'); // I will move the array to a separate file
