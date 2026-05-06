@@ -6,6 +6,9 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
+console.log('API Base URL:', API_URL);
+
+
 export const getImageUrl = (path) => {
   if (!path) return null;
   if (path.startsWith('http')) return path;

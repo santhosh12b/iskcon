@@ -42,9 +42,14 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // MongoDB Connection
+if (!process.env.MONGODB_URI) {
+    console.error('CRITICAL ERROR: MONGODB_URI is not defined in environment variables!');
+}
+
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('MongoDB connection error:', err));
+
 
 // Razorpay Instance
 let razorpay;
@@ -66,13 +71,34 @@ app.get('/api/config', (req, res) => {
 // 1. Get all events
 app.get('/api/events', async (req, res) => {
     try {
+        console.log('GET /api/events requested');
+        
+        // Check if MongoDB is connected
+        if (mongoose.connection.readyState !== 1) {
+            console.error('Database not connected. Current state:', mongoose.connection.readyState);
+            return res.status(503).json({ 
+                message: 'Database connection is not ready. Please try again in a few seconds.',
+                state: mongoose.connection.readyState 
+            });
+        }
+
         const today = new Date().toISOString().split('T')[0];
+        console.log('Querying events for date >=', today);
+        
         const events = await Event.find({ date: { $gte: today } }).sort({ date: 1 });
+        console.log(`Found ${events.length} events`);
         res.json(events);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error('ERROR in GET /api/events:', err);
+        res.status(500).json({ 
+            message: 'Internal Server Error', 
+            error: err.message,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        });
     }
 });
+
+
 
 // 2. Create a new event with file uploads
 app.post('/api/events', upload.fields([

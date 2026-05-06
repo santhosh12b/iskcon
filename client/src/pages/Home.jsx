@@ -15,7 +15,11 @@ const Home = () => {
         }
       } catch (err) {
         console.error('Failed to fetch events:', err);
+        if (err.response) {
+          console.error('Server responded with:', err.response.status, err.response.data);
+        }
       } finally {
+
         setLoading(false);
       }
     };
