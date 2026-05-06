@@ -80,8 +80,10 @@ const EventDetail = ({ singlePageEvent }) => {
       });
 
       const { orderId, amount, currency, isTestMode } = orderRes.data;
+      console.log('Order created:', { orderId, isTestMode });
 
       if (isTestMode) {
+        console.log('Running in Test Mode...');
         // AUTO-VERIFY FOR TEST MODE
         try {
           const verifyRes = await api.post('/booking/verify-payment', {
@@ -90,18 +92,21 @@ const EventDetail = ({ singlePageEvent }) => {
             razorpay_signature: 'test_signature',
           });
           
+          console.log('Verification successful:', verifyRes.data);
           toast.success('🎉 Test Booking Successful!', {
             duration: 5000,
             icon: '🙏',
           });
           setBookingSuccess({ bookingId: verifyRes.data.bookingId });
         } catch (err) {
-          toast.error('Test verification failed');
+          console.error('Verification error:', err);
+          toast.error('Test verification failed: ' + (err.response?.data?.message || err.message));
         } finally {
           setBookingLoading(false);
         }
         return;
       }
+
 
       // 2. Open Razorpay Modal
       const options = {
