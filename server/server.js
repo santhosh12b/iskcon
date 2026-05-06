@@ -347,8 +347,10 @@ app.get('/api/booking/download/:bookingId', async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename=ticket_${booking.bookingId}.pdf`);
         res.send(pdfBuffer);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error('DOWNLOAD ERROR:', err);
+        res.status(500).json({ message: 'Ticket generation failed: ' + err.message });
     }
+
 });
 
 const PORT = process.env.PORT || 5000;

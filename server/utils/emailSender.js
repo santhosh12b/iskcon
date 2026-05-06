@@ -2,12 +2,15 @@ const nodemailer = require('nodemailer');
 
 const sendTicketEmail = async (userEmail, userName, eventName, pdfBuffer, booking = {}) => {
     const transporter = nodemailer.createTransport({
-        service: process.env.EMAIL_SERVICE,
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true, // true for 465, false for other ports
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
     });
+
 
     const mailOptions = {
         from: `"ISKCON Events" <${process.env.EMAIL_USER}>`,
