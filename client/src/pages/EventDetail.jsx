@@ -79,7 +79,29 @@ const EventDetail = ({ singlePageEvent }) => {
         userPhone: bookingPhone
       });
 
-      const { orderId, amount, currency } = orderRes.data;
+      const { orderId, amount, currency, isTestMode } = orderRes.data;
+
+      if (isTestMode) {
+        // AUTO-VERIFY FOR TEST MODE
+        try {
+          const verifyRes = await api.post('/booking/verify-payment', {
+            razorpay_order_id: orderId,
+            razorpay_payment_id: 'test_payment_id',
+            razorpay_signature: 'test_signature',
+          });
+          
+          toast.success('🎉 Test Booking Successful!', {
+            duration: 5000,
+            icon: '🙏',
+          });
+          setBookingSuccess({ bookingId: verifyRes.data.bookingId });
+        } catch (err) {
+          toast.error('Test verification failed');
+        } finally {
+          setBookingLoading(false);
+        }
+        return;
+      }
 
       // 2. Open Razorpay Modal
       const options = {

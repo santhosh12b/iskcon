@@ -165,22 +165,30 @@ app.post('/api/booking/create-order', async (req, res) => {
 
         const amount = Math.round(event.price * quantity * 100); // Razorpay expects amount in paise
 
-        const options = {
-            amount: amount,
-            currency: "INR",
-            receipt: `receipt_${Date.now()}`,
-        };
+        let order;
+        if (!process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID === 'your_key_id') {
+            // DEVELOPER TEST MODE: Create a fake order object
+            console.log("RAZORPAY KEYS MISSING: Running in Test Mode");
+            order = {
+                id: `test_order_${Math.random().toString(36).substr(2, 9)}`,
+                amount: amount,
+                currency: "INR"
+            };
+        } else {
+            const options = {
+                amount: amount,
+                currency: "INR",
+                receipt: `receipt_${Math.random().toString(36).substr(2, 9)}`
+            };
+            order = await razorpay.orders.create(options);
+        }
 
-        // const order = await razorpay.orders.create(options);
-        const order = { id: `test_order_${Date.now()}`, amount, currency: "INR" }; // Mock order for testing
-
-        // Create a pending booking
         const booking = new Booking({
             event: eventId,
+            quantity,
             userName,
             userEmail,
             userPhone,
-            quantity,
             totalPrice: event.price * quantity,
             razorpayOrderId: order.id,
             bookingId: `TKT-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
@@ -192,13 +200,15 @@ app.post('/api/booking/create-order', async (req, res) => {
             orderId: order.id,
             amount: order.amount,
             currency: order.currency,
-            bookingId: booking.bookingId
+            bookingId: booking.bookingId,
+            isTestMode: order.id.startsWith('test_order_')
         });
     } catch (err) {
-        console.error('DETAILED ERROR:', err);
-        res.status(500).json({ message: 'Order creation failed' });
+        console.error('ORDER CREATION ERROR:', err);
+        res.status(500).json({ message: 'Order creation failed', error: err.message });
     }
 });
+
 
 // 4. Verify Payment
 app.post('/api/booking/verify-payment', async (req, res) => {
