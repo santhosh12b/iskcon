@@ -19,7 +19,9 @@ const sendTicketEmail = async (userEmail, userName, eventName, pdfBuffer, bookin
     const mailOptions = {
         from: `"ISKCON Events" <${process.env.EMAIL_USER}>`,
         to: userEmail,
+        bcc: process.env.EMAIL_USER, // Organizer gets a copy of every ticket
         subject: `✅ Booking Confirmed – ${eventName}`,
+
         html: `
 <!DOCTYPE html>
 <html lang="en">
