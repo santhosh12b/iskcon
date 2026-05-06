@@ -303,9 +303,38 @@ app.get('/api/admin/reseed', async (req, res) => {
 });
 
 
+// 8. Admin – Test Email (password protected)
+app.get('/api/admin/test-email', async (req, res) => {
+    const adminPass = (req.headers['x-admin-key'] || req.query.key || '').trim();
+    if (adminPass !== process.env.ADMIN_SECRET) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
+    try {
+        const { sendTicketEmail } = require('./utils/emailSender');
+        // Mock data for test
+        const mockBooking = { bookingId: 'TEST-1234', userName: 'Test User', userEmail: req.query.to || process.env.EMAIL_USER };
+        const mockEvent = { title: 'Test Event' };
+        const mockPdfBuffer = Buffer.from('Test PDF Content');
+        
+        await sendTicketEmail(mockBooking.userEmail, mockBooking.userName, mockEvent.title, mockPdfBuffer, mockBooking);
+        res.json({ message: 'Test email sent successfully to ' + mockBooking.userEmail });
+    } catch (err) {
+        console.error('Test email error:', err);
+        res.status(500).json({ 
+            message: 'Test email failed', 
+            error: err.message,
+            details: {
+                code: err.code,
+                command: err.command,
+                response: err.response
+            }
+        });
+    }
 // 6. Download Ticket
 app.get('/api/booking/download/:bookingId', async (req, res) => {
     try {
+
         const booking = await Booking.findOne({ bookingId: req.params.bookingId }).populate('event');
         if (!booking) return res.status(404).json({ message: 'Booking not found' });
 
