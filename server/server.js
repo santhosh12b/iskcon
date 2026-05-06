@@ -233,9 +233,15 @@ app.post('/api/booking/verify-payment', async (req, res) => {
                 const pdfBuffer = await generateTicketPDF(booking, event);
                 await sendTicketEmail(booking.userEmail, booking.userName, event.title, pdfBuffer, booking);
             } catch (err) {
-                console.error('Email/PDF Error:', err);
+                console.error('Email/PDF ERROR DETAILS:', {
+                    message: err.message,
+                    stack: err.stack,
+                    code: err.code,
+                    command: err.command
+                });
                 // Don't fail the response if email fails, but log it
             }
+
             
             res.json({ message: "Payment verified successfully", bookingId: booking.bookingId });
         } catch (err) {
@@ -273,6 +279,25 @@ app.get('/api/admin/bookings', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
+
+// 7. Admin – Reseed Database (password protected)
+app.get('/api/admin/reseed', async (req, res) => {
+    const adminPass = req.headers['x-admin-key'];
+    if (adminPass !== process.env.ADMIN_SECRET) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+    try {
+        console.log('Reseeding database...');
+        const seedData = require('./seed-data'); // I will move the array to a separate file
+        await Event.deleteMany({});
+        const savedEvents = await Event.insertMany(seedData);
+        res.json({ message: 'Database reseeded successfully', events: savedEvents });
+    } catch (err) {
+        console.error('Reseed error:', err);
+        res.status(500).json({ message: 'Reseed failed', error: err.message });
+    }
+});
+
 
 // 6. Download Ticket
 app.get('/api/booking/download/:bookingId', async (req, res) => {
