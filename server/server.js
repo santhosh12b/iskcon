@@ -331,8 +331,11 @@ app.get('/api/admin/test-email', async (req, res) => {
             }
         });
     }
+});
+
 // 6. Download Ticket
 app.get('/api/booking/download/:bookingId', async (req, res) => {
+
     try {
 
         const booking = await Booking.findOne({ bookingId: req.params.bookingId }).populate('event');
