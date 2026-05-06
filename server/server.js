@@ -147,6 +147,11 @@ app.get('/api/events/:id', async (req, res) => {
     }
 });
 
+// 2. Get Config
+app.get('/api/config', (req, res) => {
+    res.json({ razorpayKey: process.env.RAZORPAY_KEY_ID });
+});
+
 // 3. Create Razorpay Order
 app.post('/api/booking/create-order', async (req, res) => {
     const { eventId, quantity, userName, userEmail, userPhone } = req.body;

@@ -81,28 +81,55 @@ const EventDetail = ({ singlePageEvent }) => {
 
       const { orderId, amount, currency } = orderRes.data;
 
-      // FOR TESTING: Auto-verify without opening Razorpay
-      try {
-        const verifyRes = await api.post('/booking/verify-payment', {
-          razorpay_order_id: orderId,
-          razorpay_payment_id: 'test_payment_id',
-          razorpay_signature: 'test_signature',
-        });
-        
-        toast.success('Test Booking Confirmed! Email is being sent.');
-        setBookingSuccess({ bookingId: verifyRes.data.bookingId });
-      } catch (err) {
-        toast.error('Test verification failed');
-      }
+      // 2. Open Razorpay Modal
+      const options = {
+        key: razorpayKey,
+        amount: amount,
+        currency: currency,
+        name: "ISKCON Coimbatore",
+        description: `Booking for ${event.title}`,
+        order_id: orderId,
+        handler: async (response) => {
+          setBookingLoading(true);
+          try {
+            const verifyRes = await api.post('/booking/verify-payment', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            
+            toast.success('🎉 Booking Successful!', {
+              duration: 5000,
+              icon: '🙏',
+            });
+            setBookingSuccess({ bookingId: verifyRes.data.bookingId });
+          } catch (err) {
+            toast.error(err.response?.data?.message || 'Payment verification failed');
+          } finally {
+            setBookingLoading(false);
+          }
+        },
+        prefill: {
+          name: bookingName,
+          email: bookingEmail,
+          contact: bookingPhone,
+        },
+        theme: {
+          color: "#8C1C13",
+        },
+        modal: {
+          ondismiss: () => {
+            setBookingLoading(false);
+          }
+        }
+      };
+      
+      const rzp1 = new window.Razorpay(options);
+      rzp1.open();
 
-      /* 
-      // Original Razorpay Logic (Disabled for testing)
-      const options = { ... }
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.open();
-      */
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Booking failed');
+      console.error('Booking error:', err);
+      toast.error(err.response?.data?.message || 'Failed to initialize booking');
     } finally {
       setBookingLoading(false);
     }
