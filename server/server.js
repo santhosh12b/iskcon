@@ -282,7 +282,8 @@ app.get('/api/admin/bookings', async (req, res) => {
 
 // 7. Admin – Reseed Database (password protected)
 app.get('/api/admin/reseed', async (req, res) => {
-    const adminPass = req.headers['x-admin-key'];
+    const adminPass = req.headers['x-admin-key'] || req.query.key;
+
     if (adminPass !== process.env.ADMIN_SECRET) {
         return res.status(401).json({ message: 'Unauthorized' });
     }
