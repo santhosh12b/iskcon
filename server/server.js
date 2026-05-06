@@ -13,17 +13,25 @@ const crypto = require('crypto');
 const Event = require('./models/Event');
 const Booking = require('./models/Booking');
 const { generateTicketPDF } = require('./utils/pdfGenerator');
-const { sendTicketEmail } = require('./utils/emailSender');
+const { sendTicketEmail, sendCheckInEmail } = require('./utils/emailSender');
 
 const app = express();
 
-// Middleware
-app.use(cors({
-    origin: [process.env.FRONTEND_URL, 'http://localhost:5173'],
-    credentials: true
-}));
+
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 app.use(express.json());
+app.get('/test', (req, res) => res.send('SERVER IS UPDATED'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 // Ensure uploads directory exists
 const uploadDir = 'uploads';
@@ -55,19 +63,32 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Razorpay Instance
 let razorpay;
+const isForceTestMode = process.env.TEST_MODE === 'true';
+
 try {
-    razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID || 'dummy',
-        key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy',
-    });
+    if (isForceTestMode || !process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID === 'your_razorpay_key_id') {
+        console.log('--- RUNNING IN TEST MODE (No Real Payments) ---');
+        razorpay = null;
+    } else {
+        razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+    }
 } catch (err) {
-    console.log('Razorpay not initialized - running in test mode');
+    console.log('Razorpay initialization failed - falling back to test mode');
+    razorpay = null;
 }
+
 
 // Get Config
 app.get('/api/config', (req, res) => {
-    res.json({ razorpayKey: process.env.RAZORPAY_KEY_ID });
+    res.json({ 
+        razorpayKey: process.env.RAZORPAY_KEY_ID,
+        isTestMode: !razorpay 
+    });
 });
+
 
 // Routes
 // 1. Get all events
@@ -85,20 +106,34 @@ app.get('/api/events', async (req, res) => {
         }
 
         const today = new Date().toISOString().split('T')[0];
-        console.log('Querying events for date >=', today);
+        console.log('Querying ALL events (No Filter)');
         
-        const events = await Event.find({ date: { $gte: today } }).sort({ date: 1 });
-        console.log(`Found ${events.length} events`);
+        const events = await Event.find().sort({ date: 1 });
+        console.log(`Found ${events.length} events total`);
         res.json(events);
+
     } catch (err) {
         console.error('ERROR in GET /api/events:', err);
         res.status(500).json({ 
             message: 'Internal Server Error', 
-            error: err.message,
-            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+            error: err.message
         });
     }
 });
+
+// DEBUG: Get all events without filters
+app.get('/api/admin/all-events', async (req, res) => {
+    try {
+        const events = await Event.find();
+        res.json({
+            count: events.length,
+            events: events
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 
 
@@ -166,9 +201,8 @@ app.post('/api/booking/create-order', async (req, res) => {
         const amount = Math.round(event.price * quantity * 100); // Razorpay expects amount in paise
 
         let order;
-        if (!process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID === 'your_key_id') {
+        if (!razorpay) {
             // DEVELOPER TEST MODE: Create a fake order object
-            console.log("RAZORPAY KEYS MISSING: Running in Test Mode");
             order = {
                 id: `test_order_${Math.random().toString(36).substr(2, 9)}`,
                 amount: amount,
@@ -183,6 +217,7 @@ app.post('/api/booking/create-order', async (req, res) => {
             order = await razorpay.orders.create(options);
         }
 
+
         const booking = new Booking({
             event: eventId,
             quantity,
@@ -196,13 +231,16 @@ app.post('/api/booking/create-order', async (req, res) => {
 
         await booking.save();
 
-        res.json({
+        const responseData = {
             orderId: order.id,
             amount: order.amount,
             currency: order.currency,
             bookingId: booking.bookingId,
-            isTestMode: order.id.startsWith('test_order_')
-        });
+            isTestMode: !razorpay
+        };
+        console.log('Sending Response:', responseData);
+        res.json(responseData);
+
     } catch (err) {
         console.error('ORDER CREATION ERROR:', err);
         res.status(500).json({ message: 'Order creation failed', error: err.message });
@@ -243,11 +281,23 @@ app.post('/api/booking/verify-payment', async (req, res) => {
                 return res.status(400).json({ message: "Event just sold out! Please contact temple administration for a refund." });
             }
 
+            // Calculate Seat Numbers (Sequential starting from G0001)
+            const result = await Booking.aggregate([
+                { $match: { event: event._id, paymentStatus: 'completed', _id: { $ne: booking._id } } },
+                { $group: { _id: null, total: { $sum: "$quantity" } } }
+            ]);
+            const prevSold = result[0]?.total || 0;
+            const seatStart = prevSold + 1;
+            const seatRange = booking.quantity > 1 
+                ? `G${String(seatStart).padStart(3, '0')} - G${String(seatStart + booking.quantity - 1).padStart(3, '0')}`
+                : `G${String(seatStart).padStart(3, '0')}`;
+
             // Generate PDF and Send Email
             try {
-                const pdfBuffer = await generateTicketPDF(booking, event);
+                const pdfBuffer = await generateTicketPDF(booking, event, seatRange);
                 await sendTicketEmail(booking.userEmail, booking.userName, event.title, pdfBuffer, booking);
             } catch (err) {
+
                 console.error('Email/PDF ERROR DETAILS:', {
                     message: err.message,
                     stack: err.stack,
@@ -326,7 +376,6 @@ app.get('/api/admin/test-email', async (req, res) => {
     }
     
     try {
-        const { sendTicketEmail } = require('./utils/emailSender');
         // Mock data for test
         const mockBooking = { bookingId: 'TEST-1234', userName: 'Test User', userEmail: req.query.to || process.env.EMAIL_USER };
         const mockEvent = { title: 'Test Event' };
@@ -348,15 +397,95 @@ app.get('/api/admin/test-email', async (req, res) => {
     }
 });
 
-// 6. Download Ticket
+// 6. Validate Booking for Check-in
+app.get('/api/booking/checkin/:bookingId', async (req, res) => {
+    try {
+        const booking = await Booking.findOne({ bookingId: req.params.bookingId }).populate('event');
+        if (!booking) return res.status(404).json({ message: 'Ticket not found or invalid' });
+        
+        res.json({
+            bookingId: booking.bookingId,
+            userName: booking.userName,
+            userEmail: booking.userEmail,
+            userPhone: booking.userPhone,
+            quantity: booking.quantity,
+            eventTitle: booking.event?.title,
+            eventDate: booking.event?.date,
+            paymentStatus: booking.paymentStatus,
+            checkedIn: booking.checkedIn,
+            checkedInAt: booking.checkedInAt
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// 7. Confirm Check-in
+app.post('/api/booking/confirm-checkin/:bookingId', async (req, res) => {
+    try {
+        const { pin } = req.body;
+        if (pin !== process.env.STAFF_PIN) {
+            return res.status(401).json({ message: 'Invalid Staff PIN' });
+        }
+
+        const booking = await Booking.findOne({ bookingId: req.params.bookingId });
+        if (!booking) return res.status(404).json({ message: 'Booking not found' });
+        
+        if (booking.checkedIn) {
+            return res.status(400).json({ 
+                message: 'Already checked in!', 
+                time: booking.checkedInAt 
+            });
+        }
+
+        booking.checkedIn = true;
+        booking.checkedInAt = new Date();
+        await booking.save();
+
+        // Send Welcome Email
+        const event = await Event.findById(booking.event);
+        try {
+            console.log(`Sending Welcome Email to ${booking.userEmail}...`);
+            await sendCheckInEmail(booking.userEmail, booking.userName, event ? event.title : 'the Event');
+            console.log('Welcome Email sent successfully!');
+        } catch (err) {
+            console.error("Check-in Email failed:", err);
+        }
+
+
+        res.json({ 
+            message: 'Check-in successful!', 
+            userName: booking.userName,
+            time: booking.checkedInAt 
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// 8. Download Ticket
 app.get('/api/booking/download/:bookingId', async (req, res) => {
 
     try {
 
         const booking = await Booking.findOne({ bookingId: req.params.bookingId }).populate('event');
         if (!booking) return res.status(404).json({ message: 'Booking not found' });
+        if (!booking.event) return res.status(404).json({ message: 'Event associated with this booking no longer exists' });
 
-        const pdfBuffer = await generateTicketPDF(booking, booking.event);
+        // Calculate Seat Numbers for PDF
+        const result = await Booking.aggregate([
+            { $match: { event: booking.event._id, paymentStatus: 'completed', createdAt: { $lt: booking.createdAt } } },
+
+            { $group: { _id: null, total: { $sum: "$quantity" } } }
+        ]);
+        const prevSold = result[0]?.total || 0;
+        const seatStart = prevSold + 1;
+        const seatRange = booking.quantity > 1 
+            ? `G${String(seatStart).padStart(3, '0')} - G${String(seatStart + booking.quantity - 1).padStart(3, '0')}`
+            : `G${String(seatStart).padStart(3, '0')}`;
+
+        const pdfBuffer = await generateTicketPDF(booking, booking.event, seatRange);
+
         
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=ticket_${booking.bookingId}.pdf`);
@@ -368,5 +497,6 @@ app.get('/api/booking/download/:bookingId', async (req, res) => {
 
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

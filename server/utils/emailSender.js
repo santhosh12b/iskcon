@@ -157,4 +157,68 @@ const sendTicketEmail = async (userEmail, userName, eventName, pdfBuffer, bookin
     return transporter.sendMail(mailOptions);
 };
 
-module.exports = { sendTicketEmail };
+const sendCheckInEmail = async (userEmail, userName, eventName) => {
+    const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
+        tls: { rejectUnauthorized: false }
+    });
+
+    const mailOptions = {
+        from: `"ISKCON Events" <${process.env.EMAIL_USER}>`,
+        to: userEmail,
+        bcc: process.env.EMAIL_USER,
+        subject: `Welcome to ${eventName}! 🙏`,
+        html: `
+<!DOCTYPE html>
+<html lang="en">
+<body style="margin:0;padding:0;background:#F4F4F4;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F4F4F4;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:#0D0D0D;padding:32px 40px;text-align:center;">
+              <div style="display:inline-block;border-bottom:3px solid #8C1C13;padding-bottom:10px;">
+                <p style="margin:0;color:#8C1C13;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">ISKCON Coimbatore</p>
+                <h1 style="margin:8px 0 0;color:#FFFFFF;font-size:26px;font-weight:800;">Welcome!</h1>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px;">
+              <h2 style="margin:0 0 16px;color:#111827;font-size:22px;">Hare Krishna, ${userName}! 🙏</h2>
+              <p style="margin:0 0 20px;color:#4B5563;font-size:16px;line-height:1.6;">
+                We are thrilled to welcome you to <strong>${eventName}</strong>. Your ticket has been successfully scanned at the gate.
+              </p>
+              <p style="margin:0 0 20px;color:#4B5563;font-size:16px;line-height:1.6;">
+                Please settle in, enjoy the divine atmosphere, and prepare for an evening of soulful chanting and high-energy kirtan.
+              </p>
+              <div style="background:#F3F4F6;border-radius:12px;padding:20px;text-align:center;">
+                <p style="margin:0;color:#1F2937;font-size:14px;font-weight:600;">Complimentary dinner will be served during the event.</p>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#8C1C13;padding:16px 40px;text-align:center;">
+              <p style="margin:0;color:rgba(255,255,255,0.8);font-size:12px;letter-spacing:1px;">ENJOY THE VIBE. STAY FOR THE TRANSFORMATION.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `
+    };
+
+    return transporter.sendMail(mailOptions);
+};
+
+module.exports = { sendTicketEmail, sendCheckInEmail };

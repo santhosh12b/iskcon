@@ -11,6 +11,9 @@ const bookingSchema = new mongoose.Schema({
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
     bookingId: { type: String, unique: true }, // Unique human-readable ID
+    checkedIn: { type: Boolean, default: false },
+    checkedInAt: { type: Date },
 }, { timestamps: true });
+
 
 module.exports = mongoose.model('Booking', bookingSchema);

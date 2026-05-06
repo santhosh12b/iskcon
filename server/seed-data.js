@@ -5,31 +5,30 @@ module.exports = [
         date: "2026-06-14",
         time: "5:00 PM – 10:00 PM",
         location: "JR Orchids, Near ISKCON Coimbatore",
-        fullLocation: "JR Orchids, Near ISKCON Coimbatore, Coimbatore, Tamil Nadu",
+        fullLocation: "Coimbatore, Tamil Nadu",
+
         price: 299,
         images: ["/uploads/bajan.jpg"],
         image: "/uploads/bajan.jpg",
 
         category: "Spiritual • Music • Community Gathering",
-        totalSlots: 500,
-        availableSlots: 500,
+        totalSlots: 999,
+        availableSlots: 999,
+
         artist: "Kirtan Kovai Band",
         features: [
             "Live Performance: Kirtan by Kirtan Kovai Band",
-            "Open-air spiritual ambiance",
-            "Community chanting experience",
             "Complimentary Dinner for all attendees",
-            "Family-friendly & welcoming for all age groups",
-            "Open environment venue",
+            "Welcoming for families and children of all age groups.",
+            "Open-air theatre",
             "Ample parking space",
             "Clean restroom facilities",
             "Safe & peaceful atmosphere",
-            "Suitable for all age groups",
             "Seating available (FCFS basis)"
         ],
         thingsToKnow: [
             "Entry and seating are on a first-come, first-served basis",
-            "This is a devotional and cultural gathering—we request respectful participation",
+            "This is a cultural gathering—we request respectful participation.",
             "Outside alcohol or intoxication is strictly prohibited",
             "Children are welcome under parental supervision",
             "Enjoy a complimentary sattvic dinner served after the kirtan session"

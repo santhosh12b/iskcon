@@ -9,9 +9,10 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-18 py-3">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <img src="/logo.png" alt="ISKCON Logo" className="w-10 h-10 rounded-xl object-cover shadow-sm" />
-            <span className="text-xl font-black tracking-tight text-gray-900">ISKCON</span>
+            <img src="/logo.png" alt="ISKCON Logo" className="h-12 w-auto object-contain" />
+            <span className="text-2xl font-black tracking-tight text-gray-900">ISKCON</span>
           </Link>
+
 
           {/* My Tickets Link */}
           <Link

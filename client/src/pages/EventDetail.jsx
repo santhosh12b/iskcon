@@ -22,13 +22,19 @@ const EventDetail = ({ singlePageEvent }) => {
   useEffect(() => {
     if (singlePageEvent) {
       setEvent(singlePageEvent);
+      document.title = singlePageEvent.title;
       setLoading(false);
       return;
     }
+
+
     const fetchEvent = async () => {
       try {
         const res = await api.get(`/events/${id}`);
         setEvent(res.data);
+        document.title = res.data.title;
+
+
       } catch (err) {
         toast.error('Event not found');
         navigate('/');
@@ -39,15 +45,8 @@ const EventDetail = ({ singlePageEvent }) => {
     fetchEvent();
   }, [id, navigate, singlePageEvent]);
 
-  const loadRazorpay = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
+
+
 
   const processPayment = async (e) => {
     e.preventDefault();
@@ -58,19 +57,13 @@ const EventDetail = ({ singlePageEvent }) => {
 
     setIsBookingModalOpen(false);
 
-    const res = await loadRazorpay();
-    if (!res) {
-      toast.error('Razorpay SDK failed to load');
-      return;
-    }
-
     setBookingLoading(true);
     try {
-      // Fetch Razorpay key from server
+      // 1. Fetch Config
       const configRes = await api.get('/config');
-      const { razorpayKey } = configRes.data;
+      const { razorpayKey, isTestMode: configTestMode } = configRes.data;
 
-      // 1. Create order on server
+      // 2. Create order on server
       const orderRes = await api.post('/booking/create-order', {
         eventId: event._id,
         quantity,
@@ -79,88 +72,39 @@ const EventDetail = ({ singlePageEvent }) => {
         userPhone: bookingPhone
       });
 
-      const { orderId, amount, currency, isTestMode } = orderRes.data;
-      console.log('Order created:', { orderId, isTestMode });
 
-      if (isTestMode) {
-        console.log('Running in Test Mode...');
+      const { orderId, amount, currency, isTestMode: orderTestMode } = orderRes.data;
+      const isTest = configTestMode || orderTestMode;
+
+      if (isTest) {
         // AUTO-VERIFY FOR TEST MODE
-        try {
-          const verifyRes = await api.post('/booking/verify-payment', {
-            razorpay_order_id: orderId,
-            razorpay_payment_id: 'test_payment_id',
-            razorpay_signature: 'test_signature',
-          });
-          
-          console.log('Verification successful:', verifyRes.data);
-          toast.success('🎉 Test Booking Successful!', {
-            duration: 5000,
-            icon: '🙏',
-          });
-          setBookingSuccess({ bookingId: verifyRes.data.bookingId });
-        } catch (err) {
-          console.error('Verification error:', err);
-          toast.error('Test verification failed: ' + (err.response?.data?.message || err.message));
-        } finally {
-          setBookingLoading(false);
-        }
+        const verifyRes = await api.post('/booking/verify-payment', {
+          razorpay_order_id: orderId,
+          razorpay_payment_id: 'test_payment_id',
+          razorpay_signature: 'test_signature',
+        });
+        
+        toast.success('🚀 Booking Successful!', {
+          duration: 5000,
+          icon: '✅',
+        });
+        setBookingSuccess({ bookingId: verifyRes.data.bookingId });
+        setBookingLoading(false);
         return;
       }
 
-
-      // 2. Open Razorpay Modal
-      const options = {
-        key: razorpayKey,
-        amount: amount,
-        currency: currency,
-        name: "ISKCON Coimbatore",
-        description: `Booking for ${event.title}`,
-        order_id: orderId,
-        handler: async (response) => {
-          setBookingLoading(true);
-          try {
-            const verifyRes = await api.post('/booking/verify-payment', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-            
-            toast.success('🎉 Booking Successful!', {
-              duration: 5000,
-              icon: '🙏',
-            });
-            setBookingSuccess({ bookingId: verifyRes.data.bookingId });
-          } catch (err) {
-            toast.error(err.response?.data?.message || 'Payment verification failed');
-          } finally {
-            setBookingLoading(false);
-          }
-        },
-        prefill: {
-          name: bookingName,
-          email: bookingEmail,
-          contact: bookingPhone,
-        },
-        theme: {
-          color: "#8C1C13",
-        },
-        modal: {
-          ondismiss: () => {
-            setBookingLoading(false);
-          }
-        }
-      };
-      
-      const rzp1 = new window.Razorpay(options);
-      rzp1.open();
-
+      // 3. (Razorpay code removed)
+      toast.error('Real payment system is disabled in this version');
+      setBookingLoading(false);
     } catch (err) {
-      console.error('Booking error:', err);
-      toast.error(err.response?.data?.message || 'Failed to initialize booking');
-    } finally {
+      console.error('Booking Error:', err);
+      toast.error('Booking failed: ' + (err.response?.data?.message || err.message));
       setBookingLoading(false);
     }
   };
+
+
+
 
   if (loading) return (
     <div className="h-[80vh] flex flex-col items-center justify-center gap-4">
@@ -248,18 +192,15 @@ const EventDetail = ({ singlePageEvent }) => {
               </div>
               <div className="flex items-start gap-3 text-gray-600">
                 <MapPin className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                <span className="font-medium text-sm">{event.location} - {event.fullLocation}</span>
+                <span className="font-medium text-sm">{event.location}, {event.fullLocation}</span>
+
               </div>
             </div>
 
             {event.organizer && (
-              <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white font-bold text-xs">
-                  {event.organizer.charAt(0)}
-                </div>
-                <p className="text-sm text-gray-600 font-medium">
-                  Organized by <span className="text-gray-900 font-bold">{event.organizer}</span>
-                </p>
+              <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-100">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <p className="text-xs text-gray-400">Your ticket will be sent to your email instantly.</p>
               </div>
             )}
           </div>
@@ -290,30 +231,7 @@ const EventDetail = ({ singlePageEvent }) => {
             </div>
           </div>
 
-          {/* Artist Card */}
-          {event.artist && (
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-              <h3 className="text-xl font-bold mb-6 text-gray-900">Artist</h3>
-              <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-4">Main Performer</p>
-              <div className="flex items-center gap-6">
-                {event.artistImage ? (
-                  <img 
-                    src={getImageUrl(event.artistImage)} 
-                    className="w-24 h-24 rounded-full object-cover border border-gray-100 shadow-sm" 
-                    alt={event.artist}
-                  />
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-3xl font-bold border border-gray-200">
-                    {event.artist.charAt(0)}
-                  </div>
-                )}
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{event.artist}</p>
-                  <p className="text-sm text-gray-500 font-medium mt-1">Independent Musician</p>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* YouTube Preview Card */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
@@ -351,28 +269,35 @@ const EventDetail = ({ singlePageEvent }) => {
           {/* Location Card */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <h3 className="text-xl font-bold mb-6 text-gray-900">Event Location</h3>
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-1 space-y-4">
-                <div>
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex-1">
                   <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">Venue</p>
-                  <p className="text-sm text-gray-800 font-medium">{event.fullLocation}</p>
+                  <p className="text-sm text-gray-800 font-medium leading-relaxed">{event.location}</p>
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">City</p>
-                  <p className="text-sm text-gray-800 font-medium">{event.location}</p>
+                  <p className="text-sm text-gray-800 font-medium leading-relaxed">{event.fullLocation}</p>
                 </div>
-                {event.mapUrl && (
-                  <button onClick={() => window.open(event.mapUrl, '_blank')} className="text-blue-600 hover:text-blue-700 text-sm font-bold flex items-center gap-1">
-                    Open in Maps <Navigation className="w-3 h-3"/>
-                  </button>
-                )}
               </div>
+
               {event.embedMap && (
-                <div className="w-full md:w-64 h-48 rounded-xl overflow-hidden border border-gray-200 shrink-0">
-                  <div dangerouslySetInnerHTML={{ __html: event.embedMap }} className="w-full h-full" />
+                <div className="w-full h-80 rounded-2xl overflow-hidden border border-gray-200 shadow-inner group relative">
+                  <div dangerouslySetInnerHTML={{ __html: event.embedMap }} className="w-full h-full grayscale-[0.2] hover:grayscale-0 transition-all duration-500" />
+                  
+                  {event.mapUrl && (
+                    <button 
+                      onClick={() => window.open(event.mapUrl, '_blank')}
+                      className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm border border-gray-200 px-4 py-2 rounded-xl shadow-lg text-xs font-bold text-gray-900 flex items-center gap-2 hover:bg-white transition-all transform hover:scale-105 active:scale-95"
+                    >
+                      <Navigation className="w-3.5 h-3.5 text-blue-600" />
+                      GET DIRECTIONS
+                    </button>
+                  )}
                 </div>
               )}
             </div>
+
           </div>
 
           {/* Things to Know Card */}
@@ -466,17 +391,23 @@ const EventDetail = ({ singlePageEvent }) => {
                 <p className="text-xl font-black text-gray-900">₹{(event.price * quantity).toFixed(2)}</p>
               </div>
 
-              <button 
+              <button
                 onClick={() => setIsBookingModalOpen(true)}
-                disabled={event.availableSlots === 0}
-                className="w-full bg-[#ff4b4b] hover:bg-[#e63e3e] text-white font-bold py-3.5 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+                className="w-full bg-primary hover:bg-red-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group"
               >
-                {event.availableSlots === 0 ? 'Sold Out' : 'Book Now'}
+                <span>Book Now</span>
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              
-              <div className="flex justify-between items-center text-xs text-gray-500">
-                <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-green-500"/> Secure Payment</span>
-                <span>{event.availableSlots} slots left</span>
+
+              <div className="flex items-center justify-center gap-6 pt-4 text-xs text-gray-400 border-t border-gray-100">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                  <span>Instant Confirmation</span>
+                </div>
+                <div className="text-gray-300">|</div>
+                <div className="font-medium text-gray-500">
+                  {event.availableSlots} slots left
+                </div>
               </div>
             </div>
             )}
@@ -486,12 +417,23 @@ const EventDetail = ({ singlePageEvent }) => {
               <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-4">Organized by</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white font-bold shrink-0">
+                  <img 
+                    src="/logo.png" 
+                    className="w-14 h-14 object-contain bg-white border border-gray-100 shadow-sm shrink-0 p-1 rounded-lg" 
+                    alt={event.organizer}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+
+                  <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white font-bold shrink-0" style={{ display: 'none' }}>
                     {event.organizer.charAt(0)}
                   </div>
+
                   <div>
                     <p className="font-bold text-gray-900">{event.organizer}</p>
-                    <p className="text-xs text-gray-500">Hosted by event-goers</p>
+                    <p className="text-xs text-gray-500">Artist: Kirtan Kovai Band</p>
                   </div>
                 </div>
               </div>
@@ -537,69 +479,148 @@ const EventDetail = ({ singlePageEvent }) => {
               className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative"
             >
               <button 
-                onClick={() => setIsBookingModalOpen(false)}
+                onClick={() => {
+                  setIsBookingModalOpen(false);
+                  if (bookingSuccess) setBookingSuccess(null);
+                }}
                 className="absolute right-4 top-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-900 z-10 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
               
-              <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-                <h3 className="text-xl font-bold text-gray-900">Guest Details</h3>
-                <p className="text-sm text-gray-500 mt-1">Please enter your details to receive the tickets.</p>
-              </div>
-
-              <form onSubmit={processPayment} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Full Name</label>
-                  <input 
-                    type="text" 
-                    required
-                    value={bookingName}
-                    onChange={(e) => setBookingName(e.target.value)}
-                    placeholder="Enter your full name" 
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-sm focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Email Address</label>
-                  <input 
-                    type="email" 
-                    required
-                    value={bookingEmail}
-                    onChange={(e) => setBookingEmail(e.target.value)}
-                    placeholder="hello@example.com" 
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-sm focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Phone Number</label>
-                  <input 
-                    type="tel" 
-                    required
-                    value={bookingPhone}
-                    onChange={(e) => setBookingPhone(e.target.value)}
-                    placeholder="+91 9876543210" 
-                    className="w-full border border-gray-200 rounded-lg py-3 px-4 text-sm focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
-                  />
-                </div>
-
-                <div className="pt-4 mt-6 border-t border-gray-100 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-500 font-bold uppercase">Total</p>
-                    <p className="text-xl font-bold text-gray-900">₹{(event.price * quantity).toFixed(2)}</p>
+              {bookingSuccess ? (
+                <div className="p-8 text-center">
+                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
+                    <CheckCircle2 className="w-10 h-10" />
                   </div>
-                  <button 
-                    type="submit"
-                    disabled={bookingLoading}
-                    className="bg-[#ff4b4b] hover:bg-[#e63e3e] text-white font-bold py-3 px-6 rounded-xl transition-colors disabled:opacity-50"
-                  >
-                    {bookingLoading ? 'Processing...' : 'Proceed to Payment'}
-                  </button>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Booking Successful!</h3>
+                  <p className="text-gray-500 mb-8">Your ticket has been sent to <br/><span className="font-bold text-gray-900">{bookingEmail}</span></p>
+                  
+                  <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 mb-8">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Booking ID</p>
+                    <p className="font-mono text-xl font-bold text-gray-900">{bookingSuccess.bookingId}</p>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={async () => {
+                        toast.loading('Generating ticket...', { id: 'download' });
+                        try {
+                          const res = await api.get(`/booking/download/${bookingSuccess.bookingId}`, { responseType: 'blob' });
+                          const url = window.URL.createObjectURL(new Blob([res.data]));
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.setAttribute('download', `ticket_${bookingSuccess.bookingId}.pdf`);
+                          document.body.appendChild(link);
+                          link.click();
+                          toast.success('Downloaded!', { id: 'download' });
+                        } catch (err) {
+                          toast.error('Failed to download', { id: 'download' });
+                        }
+                      }}
+                      className="w-full bg-primary hover:bg-red-800 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all"
+                    >
+                      <Download className="w-5 h-5" />
+                      Download Ticket PDF
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsBookingModalOpen(false);
+                        setBookingSuccess(null);
+                      }}
+                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 rounded-xl transition-all"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
-              </form>
+              ) : (
+                <>
+                  <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+                    <h3 className="text-xl font-bold text-gray-900">Guest Details</h3>
+                    <p className="text-sm text-gray-500 mt-1">Please enter your details to receive the tickets.</p>
+                  </div>
+
+                  <form onSubmit={processPayment} className="p-6 space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Full Name</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={bookingName}
+                        onChange={(e) => setBookingName(e.target.value)}
+                        placeholder="Enter your full name" 
+                        className="w-full border border-gray-200 rounded-lg py-3 px-4 text-sm focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Email Address</label>
+                      <input 
+                        type="email" 
+                        required
+                        value={bookingEmail}
+                        onChange={(e) => setBookingEmail(e.target.value)}
+                        placeholder="hello@example.com" 
+                        className="w-full border border-gray-200 rounded-lg py-3 px-4 text-sm focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Phone Number</label>
+                      <input 
+                        type="tel" 
+                        required
+                        value={bookingPhone}
+                        onChange={(e) => setBookingPhone(e.target.value)}
+                        placeholder="+91 9876543210" 
+                        className="w-full border border-gray-200 rounded-lg py-3 px-4 text-sm focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
+                      />
+                    </div>
+
+                    {/* Added Quantity Selector in Modal */}
+                    <div className="pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Number of Tickets</label>
+                        <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200 p-1">
+                          <button
+                            type="button"
+                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-md transition-colors text-gray-600"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-10 text-center font-bold text-gray-900">{quantity}</span>
+                          <button
+                            type="button"
+                            onClick={() => setQuantity(Math.min(event.availableSlots, quantity + 1))}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-md transition-colors text-gray-600"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+
+                    <div className="pt-4 mt-6 border-t border-gray-100 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-gray-500 font-bold uppercase">Total</p>
+                        <p className="text-xl font-bold text-gray-900">₹{(event.price * quantity).toFixed(2)}</p>
+                      </div>
+                      <button 
+                        type="submit"
+                        disabled={bookingLoading}
+                        className="bg-[#ff4b4b] hover:bg-[#e63e3e] text-white font-bold py-3 px-6 rounded-xl transition-colors disabled:opacity-50"
+                      >
+                        {bookingLoading ? 'Processing...' : 'Proceed to Payment'}
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
             </motion.div>
           </div>
         )}
+
       </AnimatePresence>
 
     </div>

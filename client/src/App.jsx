@@ -6,6 +6,11 @@ import Home from './pages/Home';
 import EventDetail from './pages/EventDetail';
 import MyBookings from './pages/MyBookings';
 import CreateEvent from './pages/CreateEvent';
+import CheckIn from './pages/CheckIn';
+import AdminDashboard from './pages/AdminDashboard';
+import Scanner from './pages/Scanner';
+
+
 
 function App() {
   return (
@@ -25,6 +30,12 @@ function App() {
             <Route path="/event/:id" element={<EventDetail />} />
             <Route path="/my-bookings" element={<MyBookings />} />
             <Route path="/create-event" element={<CreateEvent />} />
+            <Route path="/checkin/:bookingId" element={<CheckIn />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/scanner" element={<Scanner />} />
+
+
+
           </Routes>
         </div>
       </div>
