@@ -66,9 +66,11 @@ const connectDB = async () => {
     if (mongoose.connection.readyState === 1) return mongoose.connection;
     if (cachedConnection) return cachedConnection;
 
-    console.log('Connecting to MongoDB...');
+    const maskedURI = process.env.MONGODB_URI ? process.env.MONGODB_URI.replace(/:([^@]+)@/, ':****@') : 'MISSING';
+    console.log('Connecting to MongoDB:', maskedURI);
+
     cachedConnection = mongoose.connect(process.env.MONGODB_URI, {
-        serverSelectionTimeoutMS: 5000
+        serverSelectionTimeoutMS: 10000 // Increased to 10s for slow Vercel cold starts
     });
     
     return cachedConnection;
