@@ -334,6 +334,10 @@ app.post('/api/booking/verify-payment', async (req, res) => {
     } else {
         res.status(400).json({ message: "Invalid signature sent!" });
     }
+    } catch (err) {
+        console.error('VERIFY PAYMENT ERROR:', err);
+        res.status(500).json({ message: 'Internal Server Error', error: err.message });
+    }
 });
 
 // 5. Get User Bookings by email

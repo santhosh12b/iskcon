@@ -433,7 +433,7 @@ const EventDetail = ({ singlePageEvent }) => {
 
                   <div>
                     <p className="font-bold text-gray-900">{event.organizer}</p>
-                    <p className="text-xs text-gray-500">Artist: Kirtan Kovai Band</p>
+                    <p className="text-xs text-gray-500">Artist: Kovai Chandra Team</p>
                   </div>
                 </div>
               </div>
