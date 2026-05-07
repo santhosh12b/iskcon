@@ -56,14 +56,23 @@ const upload = multer({ storage: storage });
 // Map /uploads route to the correct directory
 app.use('/uploads', express.static(isVercel ? '/tmp/uploads' : path.join(__dirname, 'uploads')));
 
-// MongoDB Connection
-if (!process.env.MONGODB_URI) {
-    console.error('CRITICAL ERROR: MONGODB_URI is not defined in environment variables!');
-}
+// MongoDB Connection Cache for Serverless
+let cachedConnection = null;
 
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB connection error:', err));
+const connectDB = async () => {
+    if (mongoose.connection.readyState === 1) return mongoose.connection;
+    if (cachedConnection) return cachedConnection;
+
+    console.log('Connecting to MongoDB...');
+    cachedConnection = mongoose.connect(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000
+    });
+    
+    return cachedConnection;
+};
+
+// Initial connection attempt
+connectDB().catch(err => console.error('Initial MongoDB connection error:', err));
 
 
 // Razorpay Instance
@@ -101,7 +110,9 @@ app.get('/api/events', async (req, res) => {
     try {
         console.log('GET /api/events requested');
         
-        // Check if MongoDB is connected
+        // Ensure DB is connected for serverless cold starts
+        await connectDB();
+        
         if (mongoose.connection.readyState !== 1) {
             console.error('Database not connected. Current state:', mongoose.connection.readyState);
             return res.status(503).json({ 
@@ -129,6 +140,7 @@ app.get('/api/events', async (req, res) => {
 // DEBUG: Get all events without filters
 app.get('/api/admin/all-events', async (req, res) => {
     try {
+        await connectDB();
         const events = await Event.find();
         res.json({
             count: events.length,
@@ -148,6 +160,7 @@ app.post('/api/events', upload.fields([
     { name: 'artistImage', maxCount: 1 }
 ]), async (req, res) => {
     try {
+        await connectDB();
         const eventData = { ...req.body };
         
         // Handle file paths
@@ -179,6 +192,7 @@ app.post('/api/events', upload.fields([
 });
 app.get('/api/events/:id', async (req, res) => {
     try {
+        await connectDB();
         const event = await Event.findById(req.params.id);
         if (!event) return res.status(404).json({ message: 'Event not found' });
         res.json(event);
@@ -196,6 +210,7 @@ app.get('/api/config', (req, res) => {
 app.post('/api/booking/create-order', async (req, res) => {
     const { eventId, quantity, userName, userEmail, userPhone } = req.body;
     try {
+        await connectDB();
         const event = await Event.findById(eventId);
         if (!event) return res.status(404).json({ message: 'Event not found' });
 
@@ -256,8 +271,10 @@ app.post('/api/booking/create-order', async (req, res) => {
 // 4. Verify Payment
 app.post('/api/booking/verify-payment', async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-
-    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+    
+    try {
+        await connectDB();
+        const sign = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSign = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || 'dummy')
         .update(sign.toString())
@@ -325,6 +342,7 @@ app.post('/api/booking/verify-payment', async (req, res) => {
 // 5. Get User Bookings by email
 app.get('/api/my-bookings/:email', async (req, res) => {
     try {
+        await connectDB();
         const bookings = await Booking.find({ userEmail: req.params.email, paymentStatus: 'completed' })
             .populate('event');
         res.json(bookings);
@@ -340,6 +358,7 @@ app.get('/api/admin/bookings', async (req, res) => {
         return res.status(401).json({ message: 'Unauthorized' });
     }
     try {
+        await connectDB();
         const bookings = await Booking.find({ paymentStatus: 'completed' })
             .populate('event', 'title date location price')
             .sort({ createdAt: -1 });
@@ -405,6 +424,7 @@ app.get('/api/admin/test-email', async (req, res) => {
 // 6. Validate Booking for Check-in
 app.get('/api/booking/checkin/:bookingId', async (req, res) => {
     try {
+        await connectDB();
         const booking = await Booking.findOne({ bookingId: req.params.bookingId }).populate('event');
         if (!booking) return res.status(404).json({ message: 'Ticket not found or invalid' });
         
@@ -428,6 +448,7 @@ app.get('/api/booking/checkin/:bookingId', async (req, res) => {
 // 7. Confirm Check-in
 app.post('/api/booking/confirm-checkin/:bookingId', async (req, res) => {
     try {
+        await connectDB();
         const { pin } = req.body;
         if (pin !== process.env.STAFF_PIN) {
             return res.status(401).json({ message: 'Invalid Staff PIN' });
@@ -470,9 +491,8 @@ app.post('/api/booking/confirm-checkin/:bookingId', async (req, res) => {
 
 // 8. Download Ticket
 app.get('/api/booking/download/:bookingId', async (req, res) => {
-
     try {
-
+        await connectDB();
         const booking = await Booking.findOne({ bookingId: req.params.bookingId }).populate('event');
         if (!booking) return res.status(404).json({ message: 'Booking not found' });
         if (!booking.event) return res.status(404).json({ message: 'Event associated with this booking no longer exists' });
