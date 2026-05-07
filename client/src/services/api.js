@@ -16,7 +16,8 @@ console.log('API Base URL:', API_URL);
 export const getImageUrl = (path) => {
   if (!path) return null;
   if (path.startsWith('http')) return path;
-  return `${IMAGE_BASE_URL}${path}`;
+  // Return relative path so it works for bundled images in client/public
+  return path;
 };
 
 export default api;
