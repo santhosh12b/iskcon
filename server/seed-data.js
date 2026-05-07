@@ -17,9 +17,9 @@ module.exports = [
 
         artist: "Kirtan Kovai Band",
         features: [
-            "Live Performance: Kirtan by Kirtan Kovai Band",
+            "Live Performance: Kirtan Kovai Band",
             "Complimentary Dinner for all attendees",
-            "Welcoming for families and children of all age groups.",
+            "Great ambience for youth, families, and children",
             "Open-air theatre",
             "Ample parking space",
             "Clean restroom facilities",
@@ -33,7 +33,7 @@ module.exports = [
             "Children are welcome under parental supervision",
             "Enjoy a complimentary sattvic dinner served after the kirtan session"
         ],
-        organizer: "ISKCON Coimbatore",
+        organizer: "Kirtan Kovai",
         youtubeUrl: "https://www.youtube.com/embed/RREIkDUVO7I?si=JaZKIdGfMUv1h8RT",
         embedMap: '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3915.9672099926147!2d77.0312513!3d11.041085299999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba85777bc79642f%3A0x1ef675b4fb9f691c!2sJR%20Orchids!5e0!3m2!1sen!2sin!4v1777536358849!5m2!1sen!2sin" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>'
     }

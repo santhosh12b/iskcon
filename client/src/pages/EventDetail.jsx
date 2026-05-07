@@ -255,11 +255,13 @@ const EventDetail = ({ singlePageEvent }) => {
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
               <h3 className="text-xl font-bold mb-2 text-gray-900">Event Comforts & Features</h3>
               <p className="text-xs text-gray-500 mb-6">About the event's comforts and features</p>
-              <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
                 {event.features.map((feature, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <ShieldCheck className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-700">{feature}</span>
+                  <div key={idx} className="flex items-start gap-3">
+                    <div className="mt-1 p-1 bg-green-50 rounded-lg text-green-600">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 leading-relaxed">{feature}</span>
                   </div>
                 ))}
               </div>
@@ -415,10 +417,10 @@ const EventDetail = ({ singlePageEvent }) => {
             {/* Organizer Card */}
             {event.organizer && (
               <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-4">Organized by</p>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-4">Performed by</p>
                 <div className="flex items-center gap-4">
                   <img 
-                    src="/logo.png" 
+                    src="/kovai.png" 
                     className="w-14 h-14 object-contain bg-white border border-gray-100 shadow-sm shrink-0 p-1 rounded-lg" 
                     alt={event.organizer}
                     onError={(e) => {
