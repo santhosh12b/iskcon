@@ -3,10 +3,21 @@
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["uploads/**", "models/**", "utils/**", "seed-data.js"]
+      }
     }
   ],
   "routes": [
+    {
+      "src": "/api/uploads/(.*)",
+      "dest": "/uploads/$1"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "/uploads/$1"
+    },
     {
       "src": "/(.*)",
       "dest": "/server.js"
