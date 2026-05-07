@@ -11,8 +11,14 @@ const bookingSchema = new mongoose.Schema({
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
     bookingId: { type: String, unique: true }, // Unique human-readable ID
-    checkedIn: { type: Boolean, default: false },
+    checkedIn: { type: Boolean, default: false }, // Overall status
     checkedInAt: { type: Date },
+    checkedInCount: { type: Number, default: 0 },
+    checkInDetails: [{
+        seatNumber: String,
+        checkedIn: { type: Boolean, default: false },
+        checkedInAt: { type: Date }
+    }]
 }, { timestamps: true });
 
 

@@ -255,7 +255,7 @@ const EventDetail = ({ singlePageEvent }) => {
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
               <h3 className="text-xl font-bold mb-2 text-gray-900">Event Comforts & Features</h3>
               <p className="text-xs text-gray-500 mb-6">About the event's comforts and features</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 md:gap-y-6 gap-x-4">
                 {event.features.map((feature, idx) => (
                   <div key={idx} className="flex items-start gap-3">
                     <div className="mt-1 p-1 bg-green-50 rounded-lg text-green-600">
@@ -435,7 +435,7 @@ const EventDetail = ({ singlePageEvent }) => {
 
                   <div>
                     <p className="font-bold text-gray-900">{event.organizer}</p>
-                    <p className="text-xs text-gray-500">Artist: Kovai Chandra Team</p>
+                    <p className="text-xs text-gray-500">Artist: Musical Wing - ISKCON Coimbatore</p>
                   </div>
                 </div>
               </div>

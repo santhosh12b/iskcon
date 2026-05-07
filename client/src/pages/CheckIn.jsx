@@ -23,6 +23,7 @@ const CheckIn = () => {
   const [booking, setBooking] = useState(null);
   const [error, setError] = useState(null);
   const [pin, setPin] = useState(localStorage.getItem('staffPin') || '');
+  const [selectedSeats, setSelectedSeats] = useState([]);
 
 
   useEffect(() => {
@@ -34,6 +35,11 @@ const CheckIn = () => {
     try {
       const response = await api.get(`/booking/checkin/${bookingId}`);
       setBooking(response.data);
+      // Auto-select all currently un-checked-in seats
+      const available = response.data.checkInDetails
+        ? response.data.checkInDetails.filter(d => !d.checkedIn).map(d => d.seatNumber)
+        : [];
+      setSelectedSeats(available);
       setError(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid or expired ticket');
@@ -44,22 +50,23 @@ const CheckIn = () => {
   };
 
   const handleConfirmCheckIn = async () => {
-    if (!pin) {
-      toast.error('Please enter the Staff PIN');
+
+    if (booking.checkInDetails && booking.checkInDetails.length > 0 && selectedSeats.length === 0) {
+      toast.error('Please select at least one seat to check in');
       return;
     }
 
+    console.log('Sending check-in for seats:', selectedSeats);
     setCheckingIn(true);
     try {
-      const response = await api.post(`/booking/confirm-checkin/${bookingId}`, { pin });
-      toast.success('Check-in Successful!', { icon: '✅' });
+      const response = await api.post(`/booking/confirm-checkin/${bookingId}`, { 
+        selectedSeats 
+      });
+      toast.success(response.data.message || 'Check-in Successful!', { icon: '✅' });
       localStorage.setItem('staffPin', pin);
-      // Update local state
-      setBooking(prev => ({ 
-        ...prev, 
-        checkedIn: true, 
-        checkedInAt: response.data.time 
-      }));
+      
+      // Refresh details to get updated check-in status
+      fetchBookingDetails();
     } catch (err) {
       if (err.response?.status === 401) {
         localStorage.removeItem('staffPin');
@@ -68,6 +75,14 @@ const CheckIn = () => {
     } finally {
       setCheckingIn(false);
     }
+  };
+
+  const toggleSeat = (seat) => {
+    setSelectedSeats(prev => 
+      prev.includes(seat) 
+        ? prev.filter(s => s !== seat) 
+        : [...prev, seat]
+    );
   };
 
   if (loading) {
@@ -100,7 +115,8 @@ const CheckIn = () => {
   const isAlreadyCheckedIn = booking?.checkedIn;
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-12">
+    <>
+      <div className="min-h-screen bg-[#F8F9FA] pb-12">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4 sticky top-0 z-10 shadow-sm">
         <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -118,28 +134,34 @@ const CheckIn = () => {
         <div className={`p-6 rounded-3xl border-2 flex flex-col items-center text-center shadow-sm ${
           isAlreadyCheckedIn 
             ? 'bg-orange-50 border-orange-100' 
-            : 'bg-green-50 border-green-100'
+            : booking.checkedInCount > 0
+              ? 'bg-blue-50 border-blue-100'
+              : 'bg-green-50 border-green-100'
         }`}>
           <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 ${
-            isAlreadyCheckedIn ? 'bg-orange-100' : 'bg-green-100'
+            isAlreadyCheckedIn ? 'bg-orange-100' : booking.checkedInCount > 0 ? 'bg-blue-100' : 'bg-green-100'
           }`}>
             {isAlreadyCheckedIn ? (
               <AlertTriangle className="w-10 h-10 text-orange-600" />
+            ) : booking.checkedInCount > 0 ? (
+              <Clock className="w-10 h-10 text-blue-600" />
             ) : (
               <CheckCircle2 className="w-10 h-10 text-green-600" />
             )}
           </div>
           <h2 className={`text-2xl font-black ${
-            isAlreadyCheckedIn ? 'text-orange-900' : 'text-green-900'
+            isAlreadyCheckedIn ? 'text-orange-900' : booking.checkedInCount > 0 ? 'text-blue-900' : 'text-green-900'
           }`}>
-            {isAlreadyCheckedIn ? 'ALREADY USED' : 'TICKET VALID'}
+            {isAlreadyCheckedIn ? 'FULLY USED' : booking.checkedInCount > 0 ? 'PARTIAL ENTRY' : 'TICKET VALID'}
           </h2>
           <p className={`text-sm mt-1 font-medium ${
-            isAlreadyCheckedIn ? 'text-orange-600' : 'text-green-600'
+            isAlreadyCheckedIn ? 'text-orange-600' : booking.checkedInCount > 0 ? 'text-blue-600' : 'text-green-600'
           }`}>
             {isAlreadyCheckedIn 
-              ? `Checked in on ${new Date(booking.checkedInAt).toLocaleTimeString()}` 
-              : 'Scan verified successfully'}
+              ? `All ${booking.quantity} guests are in` 
+              : booking.checkedInCount > 0
+                ? `${booking.checkedInCount} of ${booking.quantity} guests checked in`
+                : `${booking.quantity} tickets ready for entry`}
           </p>
         </div>
 
@@ -176,40 +198,43 @@ const CheckIn = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-dashed border-gray-200">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
-                  <Calendar className="w-5 h-5 text-gray-500" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-tighter mb-0.5">Event</p>
-                  <p className="text-base font-bold text-gray-900">{booking.eventTitle}</p>
-                  <p className="text-xs text-gray-500 mt-1">{booking.eventDate}</p>
-                </div>
+            </div>
+          </div>
+        {/* Seat Selection Logic */}
+        {!isAlreadyCheckedIn && (
+          <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-gray-50 px-6 py-3 border-b border-gray-100 flex items-center gap-2">
+              <QrCode className="w-4 h-4 text-gray-400" />
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Seat/Ticket Selection</span>
+            </div>
+            <div className="p-6">
+              <p className="text-xs text-gray-500 mb-4 font-medium">Select the guests arriving now:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {(booking.checkInDetails || Array.from({ length: booking.quantity }, (_, i) => ({ seatNumber: `Ticket ${i+1}`, checkedIn: false }))).map((detail) => (
+                  <button
+                    key={detail.seatNumber}
+                    disabled={detail.checkedIn}
+                    onClick={() => toggleSeat(detail.seatNumber)}
+                    className={`p-3 rounded-2xl border-2 transition-all flex flex-col items-center gap-1 ${
+                      detail.checkedIn
+                        ? 'bg-gray-100 border-transparent opacity-50 grayscale'
+                        : selectedSeats.includes(detail.seatNumber)
+                          ? 'bg-primary border-primary text-white shadow-lg shadow-red-900/20 scale-105'
+                          : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200'
+                    }`}
+                  >
+                    <span className="text-[10px] font-black opacity-60">SEAT</span>
+                    <span className="text-sm font-black">{detail.seatNumber}</span>
+                    {detail.checkedIn && <CheckCircle2 className="w-3 h-3 text-green-600" />}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Action Button */}
         {!isAlreadyCheckedIn && (
           <div className="space-y-4">
-            <div className="bg-white rounded-3xl border border-gray-200 p-4 shadow-sm flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
-                <span className="text-xl">🔒</span>
-              </div>
-              <div className="flex-1">
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Staff PIN</p>
-                <input 
-                  type="password" 
-                  placeholder="Enter PIN to confirm" 
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  className="w-full bg-transparent border-none p-0 text-lg font-bold text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-0"
-                />
-              </div>
-            </div>
-
             <button
               onClick={handleConfirmCheckIn}
               disabled={checkingIn}
@@ -245,7 +270,8 @@ const CheckIn = () => {
 
       </div>
     </div>
-  );
+  </>
+);
 };
 
 export default CheckIn;

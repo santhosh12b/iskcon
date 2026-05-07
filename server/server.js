@@ -316,6 +316,17 @@ app.post('/api/booking/verify-payment', async (req, res) => {
                 ? `G${String(seatStart).padStart(3, '0')} - G${String(seatStart + booking.quantity - 1).padStart(3, '0')}`
                 : `G${String(seatStart).padStart(3, '0')}`;
 
+            // Populate individual seat check-in details
+            const details = [];
+            for (let i = 0; i < booking.quantity; i++) {
+                details.push({
+                    seatNumber: `G${String(seatStart + i).padStart(3, '0')}`,
+                    checkedIn: false
+                });
+            }
+            booking.checkInDetails = details;
+            await booking.save();
+
             // Generate PDF and Send Email
             try {
                 const pdfBuffer = await generateTicketPDF(booking, event, seatRange);
@@ -434,6 +445,19 @@ app.get('/api/booking/checkin/:bookingId', async (req, res) => {
         const booking = await Booking.findOne({ bookingId: req.params.bookingId }).populate('event');
         if (!booking) return res.status(404).json({ message: 'Ticket not found or invalid' });
         
+        // For old bookings without seat details, generate virtual ticket numbers
+        let checkInDetails = booking.checkInDetails;
+        if ((!checkInDetails || checkInDetails.length === 0) && booking.quantity > 0) {
+            checkInDetails = [];
+            for (let i = 0; i < booking.quantity; i++) {
+                checkInDetails.push({
+                    seatNumber: `Ticket ${i + 1}`,
+                    checkedIn: booking.checkedIn, // If overall is checked in, all are
+                    checkedInAt: booking.checkedInAt
+                });
+            }
+        }
+        
         res.json({
             bookingId: booking.bookingId,
             userName: booking.userName,
@@ -444,7 +468,9 @@ app.get('/api/booking/checkin/:bookingId', async (req, res) => {
             eventDate: booking.event?.date,
             paymentStatus: booking.paymentStatus,
             checkedIn: booking.checkedIn,
-            checkedInAt: booking.checkedInAt
+            checkedInAt: booking.checkedInAt,
+            checkedInCount: booking.checkedInCount || (booking.checkedIn ? booking.quantity : 0),
+            checkInDetails: checkInDetails
         });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -455,23 +481,60 @@ app.get('/api/booking/checkin/:bookingId', async (req, res) => {
 app.post('/api/booking/confirm-checkin/:bookingId', async (req, res) => {
     try {
         await connectDB();
-        const { pin } = req.body;
-        if (pin !== process.env.STAFF_PIN) {
-            return res.status(401).json({ message: 'Invalid Staff PIN' });
-        }
+        const { selectedSeats } = req.body;
 
         const booking = await Booking.findOne({ bookingId: req.params.bookingId });
         if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+        // Initialize checkInDetails for old bookings that don't have them
+        if ((!booking.checkInDetails || booking.checkInDetails.length === 0) && booking.quantity > 0) {
+            const virtualDetails = [];
+            for (let i = 0; i < booking.quantity; i++) {
+                virtualDetails.push({
+                    seatNumber: `Ticket ${i + 1}`,
+                    checkedIn: false
+                });
+            }
+            booking.checkInDetails = virtualDetails;
+        }
         
         if (booking.checkedIn) {
             return res.status(400).json({ 
-                message: 'Already checked in!', 
+                message: 'All tickets for this booking are already checked in!', 
                 time: booking.checkedInAt 
             });
         }
 
-        booking.checkedIn = true;
-        booking.checkedInAt = new Date();
+        // Support both old full check-in and new partial check-in
+        console.log(`Checking in for Booking ${req.params.bookingId}. Selected Seats:`, selectedSeats);
+        
+        if (selectedSeats && Array.isArray(selectedSeats)) {
+            booking.checkInDetails.forEach(detail => {
+                if (selectedSeats.includes(detail.seatNumber)) {
+                    if (!detail.checkedIn) {
+                        detail.checkedIn = true;
+                        detail.checkedInAt = new Date();
+                    }
+                }
+            });
+            booking.checkedInCount = booking.checkInDetails.filter(d => d.checkedIn).length;
+            
+            // If all seats are now checked in, mark overall booking as checked in
+            if (booking.checkedInCount >= booking.quantity) {
+                booking.checkedIn = true;
+                booking.checkedInAt = new Date();
+            }
+        } else {
+            // Fallback: Check in everything
+            booking.checkedIn = true;
+            booking.checkedInAt = new Date();
+            booking.checkedInCount = booking.quantity;
+            booking.checkInDetails.forEach(detail => {
+                detail.checkedIn = true;
+                detail.checkedInAt = detail.checkedInAt || new Date();
+            });
+        }
+
         await booking.save();
 
         // Send Welcome Email
