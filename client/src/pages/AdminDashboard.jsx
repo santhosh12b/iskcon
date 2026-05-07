@@ -23,16 +23,16 @@ const AdminDashboard = () => {
     if (adminKey && isAuthenticated) {
       fetchData();
     }
-  }, [isAuthenticated]);
+  }, []); // Only run once on mount if already authenticated
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (!adminKey) {
       toast.error('Please enter Admin Key');
       return;
     }
     // We try to fetch data to verify the key
-    setIsAuthenticated(true); // Optimistic auth, if fetch fails we reset
+    await fetchData();
   };
 
   const fetchData = async () => {
@@ -43,6 +43,7 @@ const AdminDashboard = () => {
       });
       setData(response.data);
       localStorage.setItem('adminKey', adminKey);
+      setIsAuthenticated(true);
     } catch (err) {
       if (err.response?.status === 401) {
         toast.error('Invalid Admin Key');

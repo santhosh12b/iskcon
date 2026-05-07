@@ -30,19 +30,21 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.get('/test', (req, res) => res.send('SERVER IS UPDATED'));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// (moved to line 52)
 
 
-// Ensure uploads directory exists
-const uploadDir = 'uploads';
+// Ensure uploads directory exists. On Vercel, only /tmp is writable.
+const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
+const uploadDir = isVercel ? '/tmp/uploads' : 'uploads';
+
 if (!fs.existsSync(uploadDir)){
-    fs.mkdirSync(uploadDir);
+    fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + '-' + file.originalname);
@@ -50,6 +52,9 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
+// Map /uploads route to the correct directory
+app.use('/uploads', express.static(isVercel ? '/tmp/uploads' : path.join(__dirname, 'uploads')));
 
 // MongoDB Connection
 if (!process.env.MONGODB_URI) {
@@ -499,4 +504,9 @@ app.get('/api/booking/download/:bookingId', async (req, res) => {
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+// Required for Vercel Serverless
+module.exports = app;
