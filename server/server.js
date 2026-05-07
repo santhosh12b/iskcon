@@ -53,8 +53,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Map /uploads route to the correct directory
-app.use('/uploads', express.static(isVercel ? '/tmp/uploads' : path.join(__dirname, 'uploads')));
+// Map /uploads route to both /tmp (for new uploads) and bundled uploads (for seeded images)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+if (isVercel) {
+    app.use('/uploads', express.static('/tmp/uploads'));
+}
 
 // MongoDB Connection Cache for Serverless
 let cachedConnection = null;

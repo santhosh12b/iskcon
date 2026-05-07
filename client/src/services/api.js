@@ -16,7 +16,7 @@ console.log('API Base URL:', API_URL);
 export const getImageUrl = (path) => {
   if (!path) return null;
   if (path.startsWith('http')) return path;
-  return `${API_URL.replace('/api', '')}${path}`;
+  return `${IMAGE_BASE_URL}${path}`;
 };
 
 export default api;
