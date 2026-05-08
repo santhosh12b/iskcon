@@ -89,14 +89,14 @@ const generateTicketPDF = async (booking, event, seatRange = 'GENERAL') => {
             const bBarY = footerY - bBarH;
             doc.rect(tX, bBarY, tW, bBarH).fill('#1A1A1A');
             doc.fillColor('#FFFFFF').fontSize(11).font('Helvetica-Bold')
-               .text('ISKCON', tX + 25, bBarY + 18);
+               .text('Kirtan Kovai', tX + 25, bBarY + 18);
             doc.text('M-Ticket', tX, bBarY + 18, { width: tW - 25, align: 'right' });
 
             // 2. Cancellation Policy
             const polY = bBarY - 30;
             doc.moveTo(tX + 25, polY).lineTo(tX + tW - 25, polY).strokeColor('#F9F9F9').lineWidth(1).stroke();
             doc.fillColor('#777777').fontSize(9).font('Helvetica')
-               .text('This transaction cannot be cancelled as per cinema cancellation policy.', tX + 40, polY + 10, { width: tW - 80, align: 'center' });
+               .text('This transaction cannot be cancelled as per event cancellation policy.', tX + 40, polY + 10, { width: tW - 80, align: 'center' });
             // 3. Booking ID Text
             const bIdY = polY - 15;
             doc.fillColor('#999999').fontSize(9).font('Helvetica')

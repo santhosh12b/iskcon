@@ -4,7 +4,7 @@ module.exports = [
         description: "Vanakkam Coimbatore! Get ready for a completely different kind of vibe — where devotion meets energy, and music becomes meditation. Bhajan Clubbing is not just an event… it’s an experience. An evening filled with Soulful chanting, High-energy kirtans, and Collective spiritual connection. Let go, sing loud, clap freely, and immerse yourself in divine vibrations. Not just music. Not just devotion. This is Bhajan Clubbing. Come for the vibe. Stay for the transformation.",
         date: "2026-06-14",
         time: "5:00 PM – 10:00 PM",
-        location: "JR Orchids, Near ISKCON Coimbatore",
+        location: "JR Orchids, Near Kirtan Kovai",
         fullLocation: "Coimbatore, Tamil Nadu",
 
         price: 299,

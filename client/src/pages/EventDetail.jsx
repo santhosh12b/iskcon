@@ -83,7 +83,7 @@ const EventDetail = ({ singlePageEvent }) => {
           razorpay_payment_id: 'test_payment_id',
           razorpay_signature: 'test_signature',
         });
-        
+
         toast.success('🚀 Booking Successful!', {
           duration: 5000,
           icon: '✅',
@@ -116,7 +116,7 @@ const EventDetail = ({ singlePageEvent }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
       {/* Top Banner */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="rounded-3xl overflow-hidden w-full mb-8 relative group bg-black shadow-xl"
@@ -133,7 +133,7 @@ const EventDetail = ({ singlePageEvent }) => {
             {(() => {
               const mediaList = event.images && event.images.length > 0 ? event.images : [event.image];
               const mediaUrl = getImageUrl(mediaList[currentSlide]);
-              
+
               return mediaUrl?.match(/\.(mp4|webm|ogg)$/i) ? (
                 <video src={mediaUrl} className="w-full h-auto max-h-[80vh] object-contain" autoPlay loop muted playsInline controls />
               ) : (
@@ -146,13 +146,13 @@ const EventDetail = ({ singlePageEvent }) => {
         {/* Navigation Buttons */}
         {event.images && event.images.length > 1 && (
           <>
-            <button 
+            <button
               onClick={() => setCurrentSlide((prev) => (prev === 0 ? event.images.length - 1 : prev - 1))}
               className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <button 
+            <button
               onClick={() => setCurrentSlide((prev) => (prev === event.images.length - 1 ? 0 : prev + 1))}
               className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
             >
@@ -176,7 +176,7 @@ const EventDetail = ({ singlePageEvent }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Content */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Title & Info Card */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
@@ -184,7 +184,7 @@ const EventDetail = ({ singlePageEvent }) => {
               <span className="bg-fuchsia-600 text-white text-xs font-bold px-3 py-1 rounded-md uppercase">Exclusive</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 leading-tight">{event.title}</h1>
-            
+
             <div className="space-y-3 mb-6">
               <div className="flex items-start gap-3 text-gray-600">
                 <Calendar className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
@@ -237,14 +237,14 @@ const EventDetail = ({ singlePageEvent }) => {
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <h3 className="text-xl font-bold mb-6 text-gray-900">Event Preview</h3>
             <div className="rounded-xl overflow-hidden aspect-video bg-black w-full shadow-sm">
-              <iframe 
-                width="100%" 
-                height="100%" 
+              <iframe
+                width="100%"
+                height="100%"
                 src={event.youtubeUrl || "https://www.youtube.com/embed/RREIkDUVO7I?si=fV6n2Ld6z3bDy2lI"}
-                title="YouTube video player" 
-                frameBorder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                referrerPolicy="strict-origin-when-cross-origin" 
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
               ></iframe>
             </div>
@@ -286,9 +286,9 @@ const EventDetail = ({ singlePageEvent }) => {
               {event.embedMap && (
                 <div className="w-full h-80 rounded-2xl overflow-hidden border border-gray-200 shadow-inner group relative">
                   <div dangerouslySetInnerHTML={{ __html: event.embedMap }} className="w-full h-full grayscale-[0.2] hover:grayscale-0 transition-all duration-500" />
-                  
+
                   {event.mapUrl && (
-                    <button 
+                    <button
                       onClick={() => window.open(event.mapUrl, '_blank')}
                       className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm border border-gray-200 px-4 py-2 rounded-xl shadow-lg text-xs font-bold text-gray-900 flex items-center gap-2 hover:bg-white transition-all transform hover:scale-105 active:scale-95"
                     >
@@ -306,7 +306,7 @@ const EventDetail = ({ singlePageEvent }) => {
           {event.thingsToKnow && event.thingsToKnow.length > 0 && (
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
               <h3 className="text-xl font-bold mb-6 text-gray-900">Things to know</h3>
-              
+
               <div className="mb-6">
                 <h4 className="text-sm font-bold text-gray-900 mb-3">Terms & Conditions</h4>
                 <ul className="space-y-3">
@@ -330,7 +330,7 @@ const EventDetail = ({ singlePageEvent }) => {
         {/* Right Column: Booking Widget */}
         <div className="lg:col-span-1">
           <div className="sticky top-24 space-y-6">
-            
+
             {/* Booking Card */}
             {bookingSuccess ? (
               <div className="bg-white border border-green-200 rounded-2xl p-6 shadow-md text-center">
@@ -366,52 +366,52 @@ const EventDetail = ({ singlePageEvent }) => {
                 </button>
               </div>
             ) : (
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-md">
-              <div className="flex justify-between items-center mb-5">
-                <div>
-                  <p className="text-xs text-gray-500 font-bold uppercase">Per Ticket</p>
-                  <p className="text-2xl font-bold text-gray-900">₹{event.price}</p>
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-md">
+                <div className="flex justify-between items-center mb-5">
+                  <div>
+                    <p className="text-xs text-gray-500 font-bold uppercase">Per Ticket</p>
+                    <p className="text-2xl font-bold text-gray-900">₹{event.price}</p>
+                  </div>
+                  <div className="bg-orange-100 text-orange-600 text-xs font-bold px-2 py-1 rounded">
+                    Filling Fast
+                  </div>
                 </div>
-                <div className="bg-orange-100 text-orange-600 text-xs font-bold px-2 py-1 rounded">
-                  Filling Fast
-                </div>
-              </div>
 
-              <div className="space-y-4 mb-5">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Quantity</label>
-                  <div className="flex items-center justify-between border border-gray-200 rounded-lg p-1 bg-gray-50">
-                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 hover:bg-white rounded shadow-sm text-gray-600"><Minus className="w-4 h-4" /></button>
-                    <span className="font-bold text-gray-900">{quantity}</span>
-                    <button onClick={() => setQuantity(Math.min(event.availableSlots, quantity + 1))} className="p-2 hover:bg-white rounded shadow-sm text-gray-600"><Plus className="w-4 h-4" /></button>
+                <div className="space-y-4 mb-5">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Quantity</label>
+                    <div className="flex items-center justify-between border border-gray-200 rounded-lg p-1 bg-gray-50">
+                      <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 hover:bg-white rounded shadow-sm text-gray-600"><Minus className="w-4 h-4" /></button>
+                      <span className="font-bold text-gray-900">{quantity}</span>
+                      <button onClick={() => setQuantity(Math.min(event.availableSlots, quantity + 1))} className="p-2 hover:bg-white rounded shadow-sm text-gray-600"><Plus className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 pt-4 mb-4 flex justify-between items-center">
+                  <p className="text-sm font-bold text-gray-500">Total</p>
+                  <p className="text-xl font-black text-gray-900">₹{(event.price * quantity).toFixed(2)}</p>
+                </div>
+
+                <button
+                  onClick={() => setIsBookingModalOpen(true)}
+                  className="w-full bg-primary hover:bg-red-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group"
+                >
+                  <span>Book Now</span>
+                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+
+                <div className="flex items-center justify-center gap-6 pt-4 text-xs text-gray-400 border-t border-gray-100">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                    <span>Instant Confirmation</span>
+                  </div>
+                  <div className="text-gray-300">|</div>
+                  <div className="font-medium text-gray-500">
+                    {event.availableSlots} slots left
                   </div>
                 </div>
               </div>
-
-              <div className="border-t border-gray-100 pt-4 mb-4 flex justify-between items-center">
-                <p className="text-sm font-bold text-gray-500">Total</p>
-                <p className="text-xl font-black text-gray-900">₹{(event.price * quantity).toFixed(2)}</p>
-              </div>
-
-              <button
-                onClick={() => setIsBookingModalOpen(true)}
-                className="w-full bg-primary hover:bg-red-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group"
-              >
-                <span>Book Now</span>
-                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-
-              <div className="flex items-center justify-center gap-6 pt-4 text-xs text-gray-400 border-t border-gray-100">
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                  <span>Instant Confirmation</span>
-                </div>
-                <div className="text-gray-300">|</div>
-                <div className="font-medium text-gray-500">
-                  {event.availableSlots} slots left
-                </div>
-              </div>
-            </div>
             )}
 
             {/* Organizer Card */}
@@ -419,9 +419,9 @@ const EventDetail = ({ singlePageEvent }) => {
               <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-4">Performed by</p>
                 <div className="flex items-center gap-4">
-                  <img 
-                    src="/kovai.png" 
-                    className="w-14 h-14 object-contain bg-white border border-gray-100 shadow-sm shrink-0 p-1 rounded-lg" 
+                  <img
+                    src="/kovai.png"
+                    className="w-14 h-14 object-contain bg-white border border-gray-100 shadow-sm shrink-0 p-1 rounded-lg"
                     alt={event.organizer}
                     onError={(e) => {
                       e.target.style.display = 'none';
@@ -454,14 +454,14 @@ const EventDetail = ({ singlePageEvent }) => {
           </div>
         </div>
       </div>
-      
+
       {/* Mobile Sticky Booking Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 p-4 flex items-center justify-between shadow-2xl">
         <div>
           <p className="text-xs text-gray-500 font-bold">Total Amount</p>
           <p className="text-xl font-black text-gray-900">₹{(event.price * quantity).toFixed(2)}</p>
         </div>
-        <button 
+        <button
           onClick={() => setIsBookingModalOpen(true)}
           disabled={event.availableSlots === 0}
           className="bg-[#ff4b4b] text-white px-8 py-3 rounded-xl font-bold"
@@ -474,13 +474,13 @@ const EventDetail = ({ singlePageEvent }) => {
       <AnimatePresence>
         {isBookingModalOpen && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative"
             >
-              <button 
+              <button
                 onClick={() => {
                   setIsBookingModalOpen(false);
                   if (bookingSuccess) setBookingSuccess(null);
@@ -489,15 +489,15 @@ const EventDetail = ({ singlePageEvent }) => {
               >
                 <X className="w-5 h-5" />
               </button>
-              
+
               {bookingSuccess ? (
                 <div className="p-8 text-center">
                   <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
                     <CheckCircle2 className="w-10 h-10" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">Booking Successful!</h3>
-                  <p className="text-gray-500 mb-8">Your ticket has been sent to <br/><span className="font-bold text-gray-900">{bookingEmail}</span></p>
-                  
+                  <p className="text-gray-500 mb-8">Your ticket has been sent to <br /><span className="font-bold text-gray-900">{bookingEmail}</span></p>
+
                   <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 mb-8">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Booking ID</p>
                     <p className="font-mono text-xl font-bold text-gray-900">{bookingSuccess.bookingId}</p>
@@ -546,34 +546,34 @@ const EventDetail = ({ singlePageEvent }) => {
                   <form onSubmit={processPayment} className="p-6 space-y-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Full Name</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         required
                         value={bookingName}
                         onChange={(e) => setBookingName(e.target.value)}
-                        placeholder="Enter your full name" 
+                        placeholder="Enter your full name"
                         className="w-full border border-gray-200 rounded-lg py-3 px-4 text-sm focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Email Address</label>
-                      <input 
-                        type="email" 
+                      <input
+                        type="email"
                         required
                         value={bookingEmail}
                         onChange={(e) => setBookingEmail(e.target.value)}
-                        placeholder="hello@example.com" 
+                        placeholder="hello@example.com"
                         className="w-full border border-gray-200 rounded-lg py-3 px-4 text-sm focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Phone Number</label>
-                      <input 
-                        type="tel" 
+                      <input
+                        type="tel"
                         required
                         value={bookingPhone}
                         onChange={(e) => setBookingPhone(e.target.value)}
-                        placeholder="+91 9876543210" 
+                        placeholder="+91 9876543210"
                         className="w-full border border-gray-200 rounded-lg py-3 px-4 text-sm focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
                       />
                     </div>
@@ -608,7 +608,7 @@ const EventDetail = ({ singlePageEvent }) => {
                         <p className="text-xs text-gray-500 font-bold uppercase">Total</p>
                         <p className="text-xl font-bold text-gray-900">₹{(event.price * quantity).toFixed(2)}</p>
                       </div>
-                      <button 
+                      <button
                         type="submit"
                         disabled={bookingLoading}
                         className="bg-[#ff4b4b] hover:bg-[#e63e3e] text-white font-bold py-3 px-6 rounded-xl transition-colors disabled:opacity-50"

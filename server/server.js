@@ -113,24 +113,16 @@ app.get('/api/config', (req, res) => {
 // 1. Get all events
 app.get('/api/events', async (req, res) => {
     try {
-        console.log('GET /api/events requested');
-        
-        // Ensure DB is connected for serverless cold starts
         await connectDB();
         
         if (mongoose.connection.readyState !== 1) {
-            console.error('Database not connected. Current state:', mongoose.connection.readyState);
             return res.status(503).json({ 
-                message: 'Database connection is not ready. Please try again in a few seconds.',
+                message: 'Database connection is not ready.',
                 state: mongoose.connection.readyState 
             });
         }
 
-        const today = new Date().toISOString().split('T')[0];
-        console.log('Querying ALL events (No Filter)');
-        
         const events = await Event.find().sort({ date: 1 });
-        console.log(`Found ${events.length} events total`);
         res.json(events);
 
     } catch (err) {

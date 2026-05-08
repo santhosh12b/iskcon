@@ -17,7 +17,7 @@ const sendTicketEmail = async (userEmail, userName, eventName, pdfBuffer, bookin
 
 
     const mailOptions = {
-        from: `"ISKCON Events" <${process.env.EMAIL_USER}>`,
+        from: `"Kirtan Kovai Events" <${process.env.EMAIL_USER}>`,
         to: userEmail,
         bcc: process.env.EMAIL_USER, // Organizer gets a copy of every ticket
         subject: `✅ Booking Confirmed – ${eventName}`,
@@ -35,18 +35,13 @@ const sendTicketEmail = async (userEmail, userName, eventName, pdfBuffer, bookin
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-          
           <!-- Header -->
           <tr>
-            <td style="background:#0D0D0D;padding:32px 40px;text-align:center;">
-              <div style="display:inline-block;border-bottom:3px solid #8C1C13;padding-bottom:10px;">
-                <p style="margin:0;color:#8C1C13;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">ISKCON Coimbatore</p>
-                <h1 style="margin:8px 0 0;color:#FFFFFF;font-size:26px;font-weight:800;">Event Ticket</h1>
-              </div>
+            <td style="padding:32px 40px;text-align:center;">
+              <h1 style="margin:0;color:#111827;font-size:24px;font-weight:800;letter-spacing:-0.5px;">Kirtan Kovai</h1>
+              <p style="margin:4px 0 0;color:#6B7280;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:2px;">Event Ticket</p>
             </td>
-          </tr>
-
-          <!-- Success Banner -->
+          </tr>          <!-- Success Banner -->
           <tr>
             <td style="background:#F0FFF4;padding:24px 40px;border-bottom:1px solid #D1FAE5;text-align:center;">
               <p style="margin:0;font-size:32px;">🎉</p>
@@ -126,8 +121,8 @@ const sendTicketEmail = async (userEmail, userName, eventName, pdfBuffer, bookin
           <!-- Footer -->
           <tr>
             <td style="padding:24px 40px;text-align:center;">
-              <p style="margin:0 0 8px;color:#6B7280;font-size:12px;">Questions? Contact us at <a href="mailto:${process.env.EMAIL_USER}" style="color:#8C1C13;">${process.env.EMAIL_USER}</a></p>
-              <p style="margin:0;color:#9CA3AF;font-size:11px;">ISKCON Coimbatore &bull; No refunds for missed events</p>
+              <p style="margin:0 0 8px;color:#6B7280;font-size:12px;">Questions? Contact us at <a href="tel:+919842287073" style="color:#8C1C13;text-decoration:none;font-weight:700;">+91 98422 87073</a></p>
+              <p style="margin:0;color:#9CA3AF;font-size:11px;">Kirtan Kovai &bull; No refunds for missed events</p>
             </td>
           </tr>
 
@@ -170,7 +165,7 @@ const sendCheckInEmail = async (userEmail, userName, eventName) => {
     });
 
     const mailOptions = {
-        from: `"ISKCON Events" <${process.env.EMAIL_USER}>`,
+        from: `"Kirtan Kovai Events" <${process.env.EMAIL_USER}>`,
         to: userEmail,
         bcc: process.env.EMAIL_USER,
         subject: `Welcome to ${eventName}! 🙏`,
@@ -182,12 +177,11 @@ const sendCheckInEmail = async (userEmail, userName, eventName) => {
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          <!-- Header -->
           <tr>
-            <td style="background:#0D0D0D;padding:32px 40px;text-align:center;">
-              <div style="display:inline-block;border-bottom:3px solid #8C1C13;padding-bottom:10px;">
-                <p style="margin:0;color:#8C1C13;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">ISKCON Coimbatore</p>
-                <h1 style="margin:8px 0 0;color:#FFFFFF;font-size:26px;font-weight:800;">Welcome!</h1>
-              </div>
+            <td style="padding:32px 40px;text-align:center;">
+              <h1 style="margin:0;color:#111827;font-size:24px;font-weight:800;letter-spacing:-0.5px;">Kirtan Kovai</h1>
+              <p style="margin:4px 0 0;color:#6B7280;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:2px;">Welcome!</p>
             </td>
           </tr>
           <tr>
@@ -199,8 +193,12 @@ const sendCheckInEmail = async (userEmail, userName, eventName) => {
               <p style="margin:0 0 20px;color:#4B5563;font-size:16px;line-height:1.6;">
                 Please settle in, enjoy the divine atmosphere, and prepare for an evening of soulful chanting and high-energy kirtan.
               </p>
-              <div style="background:#F3F4F6;border-radius:12px;padding:20px;text-align:center;">
+              <div style="background:#F3F4F6;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;">
                 <p style="margin:0;color:#1F2937;font-size:14px;font-weight:600;">Complimentary dinner will be served during the event.</p>
+              </div>
+              <div style="text-align:center;border-top:1px solid #EEEEEE;padding-top:20px;">
+                <p style="margin:0 0 4px;color:#6B7280;font-size:12px;">Questions? Contact us at <a href="tel:+919842287073" style="color:#8C1C13;text-decoration:none;font-weight:700;">+91 98422 87073</a></p>
+                <p style="margin:0;color:#9CA3AF;font-size:11px;">Kirtan Kovai &bull; Enjoy the vibe!</p>
               </div>
             </td>
           </tr>
